@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moon Phase Calendar</title>
+<meta name="description" content="See tonight's moon phase and a full monthly moon calendar, calculated right in your browser.">
+<style>
+  :root {
+    --bg: #000000;
+    --panel: #0d0d0d;
+    --cell: #151515;
+    --border: #262626;
+    --text: #f5f5f5;
+    --muted: #8c8c8c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 44px 16px 56px; }
+
+  header { margin-bottom: 28px; }
+  header h1 { font-size: clamp(1.7rem, 5vw, 2.4rem); font-weight: 600; letter-spacing: -0.02em; }
+  header p { color: var(--muted); margin-top: 6px; }
+
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 26px; }
+
+  /* Featured moon */
+  .hero { display: grid; grid-template-columns: auto 1fr; gap: 36px; align-items: center; margin-bottom: 20px; }
+  .hero canvas { width: 190px; height: 190px; }
+  .hero .label { color: var(--muted); font-size: 0.9rem; }
+  .hero h2 { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 600; letter-spacing: -0.01em; margin: 4px 0 20px; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat { background: var(--cell); border-radius: 12px; padding: 13px 15px; }
+  .stat .k { color: var(--muted); font-size: 0.8rem; }
+  .stat .v { font-size: 1.1rem; font-weight: 500; margin-top: 3px; }
+  .bar { height: 4px; border-radius: 4px; background: #2a2a2a; margin-top: 10px; overflow: hidden; }
+  .bar > div { height: 100%; background: var(--text); }
+
+  /* Calendar */
+  .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .cal-head h3 { font-size: 1.3rem; font-weight: 600; }
+  .btns { display: flex; gap: 6px; }
+  button {
+    font: inherit; font-size: 0.9rem; color: var(--text); background: var(--cell);
+    border: 1px solid var(--border); border-radius: 10px; padding: 7px 14px; cursor: pointer;
+  }
+  button:hover { border-color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .dow { text-align: center; color: var(--muted); font-size: 0.8rem; padding-bottom: 6px; }
+  .day {
+    position: relative; aspect-ratio: 1 / 1.12; border-radius: 12px; border: 1px solid transparent;
+    background: var(--cell); display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 4px; cursor: pointer;
+  }
+  .day:hover { border-color: #444; }
+  .day.empty { background: transparent; cursor: default; }
+  .day.empty:hover { border-color: transparent; }
+  .day .n { position: absolute; top: 6px; left: 9px; font-size: 0.8rem; color: var(--muted); }
+  .day canvas { width: 56%; max-width: 44px; aspect-ratio: 1; }
+  .day .tag { font-size: 0.66rem; color: var(--text); text-align: center; line-height: 1.1; min-height: 0.75rem; }
+  .day.today { border-color: var(--text); }
+  .day.today .n { color: var(--text); font-weight: 600; }
+  .day.selected { background: #242424; }
+
+  .upcoming { margin-top: 28px; }
+  .upcoming h3 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
+  .up-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .up { padding: 16px 10px; background: var(--cell); border-radius: 12px; text-align: center; }
+  .up canvas { width: 36px; height: 36px; }
+  .up .t { font-size: 0.9rem; margin-top: 8px; font-weight: 500; }
+  .up .d { color: var(--muted); font-size: 0.8rem; margin-top: 3px; }
+
+  footer { color: var(--muted); font-size: 0.85rem; margin-top: 32px; text-align: center; }
+  footer a { color: var(--text); }
+
+  @media (max-width: 700px) {
+    .hero { grid-template-columns: 1fr; text-align: center; gap: 16px; }
+    .hero canvas { margin: 0 auto; width: 150px; height: 150px; }
+    .stats { text-align: left; }
+    .grid { gap: 3px; }
+    .day { border-radius: 8px; }
+    .day .tag { display: none; }
+    .day .n { top: 3px; left: 5px; font-size: 0.68rem; }
+    .up-list { grid-template-columns: repeat(2, 1fr); }
+    .panel { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Moon Phase Calendar</h1>
+    <p>Every phase of the moon, calculated in your browser.</p>
+  </header>
+
+  <section class="panel hero">
+    <canvas id="heroMoon" width="400" height="400" aria-label="Moon phase illustration"></canvas>
+    <div>
+      <div class="label" id="heroDate">Tonight</div>
+      <h2 id="heroPhase">—</h2>
+      <div class="stats">
+        <div class="stat">
+          <div class="k">Illumination</div>
+          <div class="v" id="heroIllum">—</div>
+          <div class="bar"><div id="heroBar" style="width:0%"></div></div>
+        </div>
+        <div class="stat"><div class="k">Moon age</div><div class="v" id="heroAge">—</div></div>
+        <div class="stat"><div class="k">Next full moon</div><div class="v" id="heroFull">—</div></div>
+        <div class="stat"><div class="k">Next new moon</div><div class="v" id="heroNew">—</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="cal-head">
+      <h3 id="monthTitle">—</h3>
+      <div class="btns">
+        <button id="prev" aria-label="Previous month">‹</button>
+        <button id="todayBtn">Today</button>
+        <button id="next" aria-label="Next month">›</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+
+    <div class="upcoming">
+      <h3>Upcoming phases</h3>
+      <div class="up-list" id="upList"></div>
+    </div>
+  </section>
+
+  <footer>
+    Made by <a href="https://github.com/mllaky" target="_blank" rel="noopener">Malak</a> ·
+    Phases are approximate (within about a day)
+  </footer>
+</div>
+
+<script src="moon-texture.js"></script>
+<script src="moon.js"></script>
+<script>
+const fmtDate = d => d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+const fmtLong = d => d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+function showDetails(date) {
+  const illum = illumination(date);
+  document.getElementById('heroDate').textContent =
+    sameDay(date, new Date()) ? 'Tonight · ' + fmtLong(date) : fmtLong(date);
+  document.getElementById('heroPhase').textContent = phaseInfo(date).name;
+  document.getElementById('heroIllum').textContent = Math.round(illum * 100) + '%';
+  document.getElementById('heroBar').style.width = (illum * 100).toFixed(1) + '%';
+  document.getElementById('heroAge').textContent = moonAge(date).toFixed(1) + ' days';
+  document.getElementById('heroFull').textContent = fmtDate(nextPhaseDate(date, 0.5));
+  document.getElementById('heroNew').textContent = fmtDate(nextPhaseDate(date, 1));
+  drawMoon(document.getElementById('heroMoon'), phaseFraction(date));
+}
+
+// Which main phase (if any) happens during this calendar day
+function mainPhaseOnDay(y, m, d) {
+  const start = new Date(y, m, d), end = new Date(y, m, d + 1);
+  const marks = [[1, 'New'], [0.25, 'First Q'], [0.5, 'Full'], [0.75, 'Last Q']];
+  for (const [t, label] of marks) {
+    const next = nextPhaseDate(new Date(start.getTime() - 1), t);
+    if (next >= start && next < end) return label;
+  }
+  return '';
+}
+
+let view = new Date(); view.setDate(1);
+let selected = new Date();
+
+function renderCalendar() {
+  const y = view.getFullYear(), m = view.getMonth();
+  document.getElementById('monthTitle').textContent =
+    view.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+    const el = document.createElement('div'); el.className = 'dow'; el.textContent = d; grid.appendChild(el);
+  });
+  const firstDow = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  for (let i = 0; i < firstDow; i++) {
+    const e = document.createElement('div'); e.className = 'day empty'; grid.appendChild(e);
+  }
+  const today = new Date();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(y, m, d, 21, 0, 0); // evening, when you'd look up
+    const cell = document.createElement('div');
+    cell.className = 'day';
+    if (sameDay(date, today)) cell.classList.add('today');
+    if (sameDay(date, selected)) cell.classList.add('selected');
+    cell.title = `${phaseInfo(date).name} · ${Math.round(illumination(date) * 100)}% lit`;
+    cell.innerHTML = `<span class="n">${d}</span>`;
+    const cv = document.createElement('canvas'); cv.width = 92; cv.height = 92;
+    drawMoon(cv, phaseFraction(date));
+    cell.appendChild(cv);
+    const tag = document.createElement('div'); tag.className = 'tag'; tag.textContent = mainPhaseOnDay(y, m, d);
+    cell.appendChild(tag);
+    cell.addEventListener('click', () => { selected = date; showDetails(date); renderCalendar(); window.scrollTo(0, 0); });
+    grid.appendChild(cell);
+  }
+}
+
+function renderUpcoming() {
+  const now = new Date();
+  const items = [[0.25, 'First Quarter'], [0.5, 'Full Moon'], [0.75, 'Last Quarter'], [1, 'New Moon']]
+    .map(([t, n]) => ({ date: nextPhaseDate(now, t), t, n }))
+    .sort((a, b) => a.date - b.date);
+  const list = document.getElementById('upList');
+  list.innerHTML = '';
+  items.forEach(i => {
+    const box = document.createElement('div'); box.className = 'up';
+    const cv = document.createElement('canvas'); cv.width = 72; cv.height = 72;
+    drawMoon(cv, i.t % 1);
+    box.appendChild(cv);
+    box.insertAdjacentHTML('beforeend',
+      `<div class="t">${i.n}</div><div class="d">${fmtDate(i.date)} · ${relDays(daysUntil(i.date))}</div>`);
+    list.appendChild(box);
+  });
+}
+
+document.getElementById('prev').onclick = () => { view.setMonth(view.getMonth() - 1); renderCalendar(); };
+document.getElementById('next').onclick = () => { view.setMonth(view.getMonth() + 1); renderCalendar(); };
+document.getElementById('todayBtn').onclick = () => {
+  view = new Date(); view.setDate(1); selected = new Date(); showDetails(selected); renderCalendar();
+};
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') document.getElementById('prev').click();
+  if (e.key === 'ArrowRight') document.getElementById('next').click();
+});
+
+showDetails(new Date());
+renderCalendar();
+renderUpcoming();
+</script>
+</body>
+</html>

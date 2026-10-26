@@ -1,0 +1,59 @@
+# Builds the Mac (.dmg) and Windows (.exe) installers on GitHub's computers
+# and attaches them to a Release, so anyone can download the widget.
+#
+# How to trigger: Actions tab → "Build widget" → "Run workflow"
+#             or: push a tag like v1.0.0
+
+name: Build widget
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            script: dist:mac
+          - os: windows-latest
+            script: dist:win
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run ${{ matrix.script }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false   # no paid code-signing certificate
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.os }}
+          path: |
+            dist/*.dmg
+            dist/*.exe
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'v1.0.0' }}
+          name: Moon Phase ${{ github.ref_type == 'tag' && github.ref_name || 'v1.0.0' }}
+          files: installers/*
+          body: |
+            Download the widget for your computer:
+            - **Mac:** `Moon-Phase-…-mac.dmg`
+            - **Windows:** `Moon-Phase-Setup-…-windows.exe`

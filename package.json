@@ -1,0 +1,49 @@
+{
+  "name": "moon-phase-calendar",
+  "productName": "Moon Phase",
+  "version": "1.0.0",
+  "description": "A minimal moon phase desktop widget for macOS and Windows, plus a full moon calendar.",
+  "main": "main.js",
+  "author": "Malak",
+  "license": "MIT",
+  "homepage": "https://github.com/mllaky/moon-phase-calendar",
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:win": "electron-builder --win --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.mllaky.moonphase",
+    "productName": "Moon Phase",
+    "files": [
+      "main.js",
+      "preload.js",
+      "moon.js",
+      "moon-texture.js",
+      "widget.html",
+      "index.html",
+      "assets/**"
+    ],
+    "directories": { "output": "dist" },
+    "mac": {
+      "icon": "assets/icon.png",
+      "category": "public.app-category.utilities",
+      "target": [{ "target": "dmg", "arch": ["universal"] }],
+      "extendInfo": { "LSUIElement": true }
+    },
+    "dmg": { "artifactName": "Moon-Phase-${version}-mac.dmg" },
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "Moon-Phase-Setup-${version}-windows.exe"
+    }
+  }
+}
