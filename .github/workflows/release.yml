@@ -39,21 +39,17 @@ jobs:
           path: |
             dist/*.dmg
             dist/*.exe
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: installers
-          merge-multiple: true
+      # Each computer type publishes its own download as soon as it's built
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'v1.0.0' }}
           name: Moon Phase ${{ github.ref_type == 'tag' && github.ref_name || 'v1.0.0' }}
-          files: installers/*
+          files: |
+            dist/*.dmg
+            dist/*.exe
           body: |
             Download the widget for your computer:
-            - **Mac:** `Moon-Phase-…-mac.dmg`
             - **Windows:** `Moon-Phase-Setup-…-windows.exe`
+            - **Mac:** `Moon-Phase-…-mac.dmg`
+
+            Or use it in your browser: https://mllaky.github.io/moon-phase-calendar/
