@@ -25,6 +25,7 @@ Everything is calculated locally, with no internet, accounts or APIs needed.
 
 ### Desktop widget (Mac & Windows)
 - Tonight's **phase**, **illumination %**, and dates for the **next full and new moon**
+- The **name of the moon**: Wolf, Harvest, Hunter's, Blue Moon, Supermoon and more
 - A **7-night strip** showing how the moon will change this week
 - **Drag it anywhere** on your desktop, and it remembers where you put it
 - **Starts with your computer** (you can turn this off)
@@ -58,19 +59,17 @@ Everything is calculated locally, with no internet, accounts or APIs needed.
 
 ## 🧮 How it works
 
-The moon completes one cycle (new → full → new) every **29.53 days**, known as the *synodic month*.
+**Moon phases:** the app uses the formulas from Jean Meeus's *Astronomical Algorithms*, the standard reference used by astronomers, to calculate the exact time of every new moon, quarter and full moon. Results match the Old Farmer's Almanac to within a minute, for any year, past or future. Nothing is hard-coded, so it keeps working forever.
 
-1. Start from a known new moon: **6 January 2000, 18:14 UTC**.
-2. Count the days between then and any date.
-3. The remainder after dividing by 29.53 is the **moon's age**, i.e. how far into the current cycle it is.
-4. From the age:
-   - **Phase name**: the cycle is split into 8 named phases
-   - **Illumination**: `(1 − cos(2π × age / 29.53)) / 2`
-   - **Next full / new moon**: the time until age reaches 14.77 or 29.53 days
+**Moon names:** every full moon gets its traditional name, worked out automatically each year:
+- each month has its own name (Wolf, Snow, Worm, Pink, Flower, Strawberry, Buck, Sturgeon, Corn, Hunter's, Beaver, Cold)
+- the **Harvest Moon** is the full moon closest to the September equinox, and the **Hunter's Moon** is the one after it
+- a second full moon in the same month is a **Blue Moon**
+- the app also calculates the Moon's distance from Earth, and labels full moons as a **Supermoon** (closer than ~362,500 km) or **Micromoon** (farther than 405,000 km)
 
-**Drawing the moon:** a Python script (`tools/generate_moon_texture.py`) builds the moon's surface: the seas placed at their real latitude/longitude, around 4,000 craters with rims and central peaks, and ray systems. It saves which way every bit of ground faces plus how bright it is. In the browser, each pixel is then lit by the sun from the angle that matches the phase (a Lommel–Seeliger lighting model, the one astronomers use for the moon), so the shadow line, crater shadows and earthshine all come out naturally.
+Every day shows which named moon it belongs to, e.g. *"Growing toward the Beaver Moon"*, *"Tonight: the Hunter's Moon"*, or *"Fading after the Harvest Moon"*.
 
-> **Note:** this uses the *average* lunar cycle, so dates can be off by up to about a day compared with exact astronomical tables.
+**Drawing the moon:** a Python script (`tools/generate_moon_texture.py`) builds the moon's surface: the seas placed at their real latitude/longitude, around 4,000 craters with rims and central peaks, and ray systems. In the browser, each pixel is lit by the sun from the angle that matches the phase (a Lommel–Seeliger lighting model), so the shadow line, crater shadows and earthshine all come out naturally.
 
 ## 🛠️ Built with
 

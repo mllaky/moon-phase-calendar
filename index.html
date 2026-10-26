@@ -41,7 +41,8 @@
   .hero { display: grid; grid-template-columns: auto 1fr; gap: 36px; align-items: center; margin-bottom: 20px; }
   .hero canvas { width: 190px; height: 190px; }
   .hero .label { color: var(--muted); font-size: 0.9rem; }
-  .hero h2 { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 600; letter-spacing: -0.01em; margin: 4px 0 20px; }
+  .hero h2 { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 600; letter-spacing: -0.01em; margin: 4px 0 4px; }
+  .mname { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
   .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .stat { background: var(--cell); border-radius: 12px; padding: 13px 15px; }
   .stat .k { color: var(--muted); font-size: 0.8rem; }
@@ -111,6 +112,7 @@
     <div>
       <div class="label" id="heroDate">Tonight</div>
       <h2 id="heroPhase">—</h2>
+      <div class="mname" id="heroName"></div>
       <div class="stats">
         <div class="stat">
           <div class="k">Illumination</div>
@@ -143,7 +145,7 @@
 
   <footer>
     Made by <a href="https://github.com/mllaky" target="_blank" rel="noopener">Malak</a> ·
-    Phases are approximate (within about a day)
+    Phase times accurate to within minutes
   </footer>
 </div>
 
@@ -164,6 +166,9 @@ function showDetails(date) {
   document.getElementById('heroFull').textContent = fmtDate(nextPhaseDate(date, 0.5));
   document.getElementById('heroNew').textContent = fmtDate(nextPhaseDate(date, 1));
   drawMoon(document.getElementById('heroMoon'), phaseFraction(date));
+  const nm = moonNameLine(date);
+  const hn = document.getElementById('heroName');
+  hn.textContent = nm.text + (nm.cyc.meaning ? ` — ${nm.cyc.meaning.toLowerCase()}` : '');
 }
 
 // Which main phase (if any) happens during this calendar day
@@ -172,7 +177,10 @@ function mainPhaseOnDay(y, m, d) {
   const marks = [[1, 'New'], [0.25, 'First Q'], [0.5, 'Full'], [0.75, 'Last Q']];
   for (const [t, label] of marks) {
     const next = nextPhaseDate(new Date(start.getTime() - 1), t);
-    if (next >= start && next < end) return label;
+    if (next >= start && next < end) {
+      if (t === 0.5) { const n = fullMoonName(next); return n.name.replace(' Moon', '') + (n.extra === 'Supermoon' ? ' ★' : ''); }
+      return label;
+    }
   }
   return '';
 }
@@ -226,7 +234,8 @@ function renderUpcoming() {
     drawMoon(cv, i.t % 1);
     box.appendChild(cv);
     box.insertAdjacentHTML('beforeend',
-      `<div class="t">${i.n}</div><div class="d">${fmtDate(i.date)} · ${relDays(daysUntil(i.date))}</div>`);
+      `<div class="t">${i.t === 0.5 ? fullMoonName(i.date).name : i.n}</div><div class="d">${fmtDate(i.date)} · ${relDays(daysUntil(i.date))}</div>`
+      + (i.t === 0.5 && fullMoonName(i.date).extra ? `<div class="d">${fullMoonName(i.date).extra}</div>` : ''));
     list.appendChild(box);
   });
 }
