@@ -30,6 +30,9 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - id: v
+        shell: bash
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
       - run: npm run ${{ matrix.script }}
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false   # no paid code-signing certificate
@@ -42,8 +45,9 @@ jobs:
       # Each computer type publishes its own download as soon as it's built
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'v1.0.0' }}
-          name: Moon Phase ${{ github.ref_type == 'tag' && github.ref_name || 'v1.0.0' }}
+          tag_name: v${{ steps.v.outputs.version }}
+          name: Moon Phase v${{ steps.v.outputs.version }}
+          make_latest: true
           files: |
             dist/*.dmg
             dist/*.exe

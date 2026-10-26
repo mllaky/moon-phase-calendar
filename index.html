@@ -6,6 +6,12 @@
 <title>Moon Phase Calendar</title>
 <meta name="description" content="See tonight's moon phase and a full monthly moon calendar, calculated right in your browser.">
 <style>
+  @font-face {
+    font-family: 'Pixelify Sans';
+    src: url('assets/fonts/PixelifySans.woff2') format('woff2');
+    font-weight: 400 700;
+    font-display: block;
+  }
   :root {
     --bg: #000000;
     --panel: #0d0d0d;
@@ -16,12 +22,12 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Pixelify Sans', -apple-system, "Segoe UI", Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
+    -webkit-font-smoothing: none;
   }
   .wrap { max-width: 960px; margin: 0 auto; padding: 44px 16px 56px; }
 
@@ -238,6 +244,17 @@ document.addEventListener('keydown', e => {
 showDetails(new Date());
 renderCalendar();
 renderUpcoming();
+
+// Follow the user's own clock: when the day (or time zone) changes, move "today" along with it
+let lastDay = new Date().toDateString() + new Date().getTimezoneOffset();
+setInterval(() => {
+  const now = new Date(), key = now.toDateString() + now.getTimezoneOffset();
+  if (key === lastDay) return;
+  const wasOnToday = sameDay(selected, new Date(now.getTime() - DAY_MS)) || sameDay(selected, now);
+  lastDay = key;
+  if (wasOnToday) { selected = now; view = new Date(now.getFullYear(), now.getMonth(), 1); showDetails(now); }
+  renderCalendar(); renderUpcoming();
+}, 30 * 1000);
 </script>
 </body>
 </html>

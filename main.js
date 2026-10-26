@@ -1,5 +1,5 @@
 // Moon Phase desktop widget for macOS and Windows (Electron).
-const { app, BrowserWindow, Tray, Menu, ipcMain, screen, shell, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, screen, shell, nativeImage, powerMonitor } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -146,6 +146,11 @@ if (!app.requestSingleInstanceLock()) {
     }
     createTray();
     createWidget();
+
+    // When the computer wakes up or is unlocked, redraw with the current date and time zone
+    const refresh = () => { if (widget) widget.webContents.reload(); };
+    powerMonitor.on('resume', refresh);
+    powerMonitor.on('unlock-screen', refresh);
   });
 
   // Keep running in the tray when windows are closed

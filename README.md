@@ -28,6 +28,8 @@ Everything is calculated locally, with no internet, accounts or APIs needed.
 - A **7-night strip** showing how the moon will change this week
 - **Drag it anywhere** on your desktop, and it remembers where you put it
 - **Starts with your computer** (you can turn this off)
+- **Always on your own time:** switches to the new day's moon at midnight, refreshes when your computer wakes up, and follows you across time zones
+- **Pixel font** (Pixelify Sans) built in, so it works offline
 - Lives in the menu bar / system tray, with no Dock or taskbar clutter
 - Right-click the widget for options: keep on top, start at login, reset position, quit
 - **Open calendar** button for the full monthly view
@@ -75,6 +77,7 @@ The moon completes one cycle (new → full → new) every **29.53 days**, known 
 - **Electron**: turns the web page into a native Mac & Windows app
 - HTML, CSS and vanilla JavaScript, with no frameworks
 - Canvas API for drawing the moons pixel by pixel
+- Pixelify Sans font (SIL Open Font License)
 - Python (NumPy, SciPy, Pillow) to generate the moon surface
 - **GitHub Actions**: automatically builds the `.dmg` and `.exe` installers
 

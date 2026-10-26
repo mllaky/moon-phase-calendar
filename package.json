@@ -1,7 +1,7 @@
 {
   "name": "moon-phase-calendar",
   "productName": "Moon Phase",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A minimal moon phase desktop widget for macOS and Windows, plus a full moon calendar.",
   "main": "main.js",
   "author": "Malak",

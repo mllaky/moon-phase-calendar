@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Moon Phase</title>
 <style>
+  @font-face {
+    font-family: 'Pixelify Sans';
+    src: url('assets/fonts/PixelifySans.woff2') format('woff2');
+    font-weight: 400 700;
+    font-display: block;
+  }
   :root {
     --bg: #0b0b0b;
     --cell: #171717;
@@ -15,9 +21,9 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: transparent; overflow: hidden; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Pixelify Sans', -apple-system, "Segoe UI", Arial, sans-serif;
     color: var(--text);
-    -webkit-font-smoothing: antialiased;
+    -webkit-font-smoothing: none;
     user-select: none;
     -webkit-user-select: none;
   }
@@ -33,28 +39,28 @@
     -webkit-app-region: drag;
   }
   .top { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--muted); }
-  .top b { color: var(--text); font-weight: 600; font-size: 13px; }
+  .top b { color: var(--text); font-weight: 600; font-size: 15px; }
 
   .main { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
   .main canvas { width: 96px; height: 96px; flex-shrink: 0; }
-  .phase { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
-  .illum { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .phase { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+  .illum { font-size: 14px; color: var(--muted); margin-top: 4px; }
   .bar { height: 3px; border-radius: 3px; background: #2a2a2a; margin-top: 8px; overflow: hidden; }
   .bar > div { height: 100%; background: var(--text); }
 
   .rows { margin-top: 16px; display: grid; gap: 6px; }
-  .row { display: flex; justify-content: space-between; background: var(--cell); border-radius: 10px; padding: 8px 12px; font-size: 13px; }
+  .row { display: flex; justify-content: space-between; background: var(--cell); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
   .row span:last-child { color: var(--muted); }
 
   .week { display: grid; grid-template-columns: repeat(7, 1fr); margin-top: 14px; text-align: center; }
-  .week div { font-size: 11px; color: var(--muted); }
+  .week div { font-size: 12px; color: var(--muted); }
   .week canvas { width: 22px; height: 22px; display: block; margin: 5px auto 0; }
   .week .today { color: var(--text); font-weight: 600; }
 
   .foot { margin-top: auto; padding-top: 12px; display: flex; justify-content: center; }
   .foot button {
     -webkit-app-region: no-drag;
-    font: inherit; font-size: 12px; color: var(--text); background: var(--cell);
+    font: inherit; font-size: 13px; color: var(--text); background: var(--cell);
     border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer;
   }
   .foot button:hover { border-color: var(--muted); }
@@ -130,9 +136,33 @@ document.addEventListener('contextmenu', e => {
   if (window.moonWidget) { e.preventDefault(); window.moonWidget.showMenu(); }
 });
 
+// ---------- Keep in step with the user's own clock ----------
+// Everything above uses the computer's local date and time zone.
+const clockKey = () => {
+  const n = new Date();
+  return `${n.toDateString()}|${n.getTimezoneOffset()}|${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+};
+let lastKey = clockKey();
+
 render();
-setInterval(render, 10 * 60 * 1000);                    // refresh every 10 minutes
-document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+
+// Check every 30 seconds: a new day, a clock change, or a new time zone triggers a redraw
+setInterval(() => {
+  const key = clockKey();
+  if (key !== lastKey) { lastKey = key; render(); }
+}, 30 * 1000);
+
+// Redraw exactly at local midnight, then every night after
+function scheduleMidnight() {
+  const n = new Date();
+  const next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5);
+  setTimeout(() => { lastKey = clockKey(); render(); scheduleMidnight(); }, next - n);
+}
+scheduleMidnight();
+
+// Also refresh every 10 minutes (countdowns), and whenever the widget comes back into view
+setInterval(render, 10 * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastKey = clockKey(); render(); } });
 </script>
 </body>
 </html>
