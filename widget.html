@@ -38,8 +38,38 @@
     flex-direction: column;
     -webkit-app-region: drag;
   }
-  .top { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--muted); }
-  .top b { color: var(--text); font-weight: 600; font-size: 15px; }
+  .top { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); position: relative; }
+  .clock { color: var(--text); font-weight: 600; font-size: 17px; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; }
+  .datebtn {
+    -webkit-app-region: no-drag; font: inherit; font-size: 12px; color: var(--muted);
+    background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 3px 8px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .datebtn:hover, .datebtn.open { border-color: var(--border); color: var(--text); }
+  .datebtn.other { color: var(--text); border-color: var(--muted); }
+  .caret { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; }
+
+  /* Date picker: slides down from the date */
+  .picker {
+    -webkit-app-region: no-drag;
+    position: absolute; left: 12px; right: 12px; top: 46px; z-index: 5;
+    background: #111; border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+    transform: translateY(-8px); opacity: 0; pointer-events: none;
+    transition: transform .16s ease-out, opacity .16s ease-out;
+  }
+  .picker.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .picker .lbl { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .picker .sel { display: grid; grid-template-columns: 0.8fr 1.3fr 1fr; gap: 6px; }
+  .picker select {
+    font: inherit; font-size: 13px; color: var(--text); background: var(--cell);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 6px; width: 100%; cursor: pointer;
+  }
+  .picker .acts { display: flex; justify-content: space-between; margin-top: 10px; }
+  .picker button {
+    font: inherit; font-size: 12px; color: var(--text); background: var(--cell);
+    border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; cursor: pointer;
+  }
+  .picker button:hover, .picker select:hover { border-color: var(--muted); }
 
   .main { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
   .main canvas { width: 96px; height: 96px; flex-shrink: 0; }
@@ -48,6 +78,10 @@
   .bar { height: 3px; border-radius: 3px; background: #2a2a2a; margin-top: 8px; overflow: hidden; }
   .bar > div { height: 100%; background: var(--text); }
   .mname { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.3; }
+  .glow {
+    color: #ffffff;
+    text-shadow: 0 0 3px rgba(255,255,255,0.85), 0 0 9px rgba(255,255,255,0.55), 0 0 18px rgba(255,255,255,0.3);
+  }
 
   .rows { margin-top: 16px; display: grid; gap: 6px; }
   .row { display: flex; justify-content: space-between; background: var(--cell); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
@@ -69,7 +103,19 @@
 </head>
 <body>
 <div class="card" id="card">
-  <div class="top"><b>Moon</b><span id="date">—</span></div>
+  <div class="top">
+    <span class="clock" id="clock">--:--:--</span>
+    <button class="datebtn" id="dateBtn" title="Choose a date"><span id="date">—</span><span class="caret"></span></button>
+  </div>
+  <div class="picker" id="picker">
+    <div class="lbl">See the moon on any date</div>
+    <div class="sel">
+      <select id="pDay" aria-label="Day"></select>
+      <select id="pMonth" aria-label="Month"></select>
+      <select id="pYear" aria-label="Year"></select>
+    </div>
+    <div class="acts"><button id="pToday">Today</button><button id="pClose">Done</button></div>
+  </div>
 
   <div class="main">
     <canvas id="moon" width="192" height="192" aria-label="Tonight's moon"></canvas>
@@ -96,12 +142,18 @@
 <script>
 const fmtShort = d => d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
 
+let chosen = null;   // null = today; otherwise the date picked in the drop-down
+
 function render() {
-  const now = new Date();
+  const realNow = new Date();
+  const isToday = !chosen || sameDay(chosen, realNow);
+  const now = isToday ? realNow : new Date(chosen.getFullYear(), chosen.getMonth(), chosen.getDate(), 12, 0, 0);
   const tonight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 21, 0, 0);
   const illum = illumination(tonight);
 
-  document.getElementById('date').textContent = fmtShort(now);
+  document.getElementById('date').textContent = isToday ? fmtShort(now)
+    : now.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  document.getElementById('dateBtn').classList.toggle('other', !isToday);
   document.getElementById('phase').textContent = phaseInfo(tonight).name;
   document.getElementById('illum').textContent = Math.round(illum * 100) + '% illuminated';
   document.getElementById('bar').style.width = (illum * 100).toFixed(1) + '%';
@@ -109,12 +161,17 @@ function render() {
 
   const nm = moonNameLine(tonight);
   const mn = document.getElementById('mname');
-  mn.textContent = nm.text;
+  mn.innerHTML = '';
+  mn.append(nm.prefix + ' ');
+  const g = document.createElement('span'); g.className = 'glow'; g.textContent = nm.label;
+  mn.appendChild(g);
   mn.title = nm.cyc.meaning;
 
   const full = nextPhaseDate(now, 0.5), nw = nextPhaseDate(now, 1);
-  document.getElementById('full').textContent = `${fmtShort(full)} · ${relDays(daysUntil(full))}`;
-  document.getElementById('new').textContent = `${fmtShort(nw)} · ${relDays(daysUntil(nw))}`;
+  const rel = d => isToday ? relDays(daysUntil(d))
+    : (n => `${n} day${n === 1 ? '' : 's'} later`)(Math.round((new Date(d).setHours(0,0,0,0) - new Date(now).setHours(0,0,0,0)) / DAY_MS));
+  document.getElementById('full').textContent = `${fmtShort(full)} · ${rel(full)}`;
+  document.getElementById('new').textContent = `${fmtShort(nw)} · ${rel(nw)}`;
 
   // Next 7 nights
   const week = document.getElementById('week');
@@ -123,7 +180,7 @@ function render() {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 21, 0, 0);
     const cell = document.createElement('div');
     if (i === 0) cell.className = 'today';
-    cell.textContent = i === 0 ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' });
+    cell.textContent = i === 0 && isToday ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' });
     cell.title = `${phaseInfo(d).name} · ${Math.round(illumination(d) * 100)}%`;
     const cv = document.createElement('canvas'); cv.width = 44; cv.height = 44;
     drawMoon(cv, phaseFraction(d));
@@ -131,6 +188,45 @@ function render() {
     week.appendChild(cell);
   }
 }
+
+// ---------- Live clock (hours, minutes, seconds) ----------
+const clockEl = document.getElementById('clock');
+function tick() {
+  clockEl.textContent = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  setTimeout(tick, 1000 - (Date.now() % 1000) + 5);   // line up with the start of each second
+}
+tick();
+
+// ---------- Date picker (day / month / year) ----------
+const pDay = document.getElementById('pDay'), pMonth = document.getElementById('pMonth'), pYear = document.getElementById('pYear');
+const picker = document.getElementById('picker'), dateBtn = document.getElementById('dateBtn');
+for (let m = 0; m < 12; m++) pMonth.add(new Option(new Date(2000, m, 1).toLocaleDateString(undefined, { month: 'long' }), m));
+for (let y = 1900; y <= 2100; y++) pYear.add(new Option(y, y));
+
+function fillDays() {
+  const n = new Date(+pYear.value, +pMonth.value + 1, 0).getDate();
+  const keep = Math.min(+pDay.value || 1, n);
+  pDay.innerHTML = '';
+  for (let d = 1; d <= n; d++) pDay.add(new Option(d, d));
+  pDay.value = keep;
+}
+function syncPicker() {
+  const d = chosen || new Date();
+  pYear.value = d.getFullYear(); pMonth.value = d.getMonth(); fillDays(); pDay.value = d.getDate();
+}
+function pick() {
+  chosen = new Date(+pYear.value, +pMonth.value, +pDay.value);
+  if (sameDay(chosen, new Date())) chosen = null;
+  render();
+}
+pMonth.onchange = () => { fillDays(); pick(); };
+pYear.onchange = () => { fillDays(); pick(); };
+pDay.onchange = pick;
+function setOpen(open) { picker.classList.toggle('open', open); dateBtn.classList.toggle('open', open); if (open) syncPicker(); }
+dateBtn.onclick = () => setOpen(!picker.classList.contains('open'));
+document.getElementById('pClose').onclick = () => setOpen(false);
+document.getElementById('pToday').onclick = () => { chosen = null; syncPicker(); render(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
 
 // In the desktop app this opens the full calendar window; in a browser it just links to it.
 document.getElementById('openCal').onclick = () => {

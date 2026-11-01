@@ -166,9 +166,8 @@ function currentMoonCycle(date) {
 function moonNameLine(date) {
   const cyc = currentMoonCycle(date);
   const label = cyc.name + (cyc.extra ? ` · ${cyc.extra}` : '');
-  if (sameDay(date, cyc.fullDate)) return { text: `Tonight: the ${label}`, cyc };
-  if (date < cyc.fullDate) return { text: `Growing toward the ${label}`, cyc };
-  return { text: `Fading after the ${label}`, cyc };
+  const prefix = sameDay(date, cyc.fullDate) ? 'Tonight: the' : date < cyc.fullDate ? 'Growing toward the' : 'Fading after the';
+  return { text: `${prefix} ${label}`, prefix, label, cyc };
 }
 
 function sameDay(a, b) {

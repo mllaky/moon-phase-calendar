@@ -43,6 +43,13 @@
   .hero .label { color: var(--muted); font-size: 0.9rem; }
   .hero h2 { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 600; letter-spacing: -0.01em; margin: 4px 0 4px; }
   .mname { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
+  .glow { color: #fff; text-shadow: 0 0 3px rgba(255,255,255,0.85), 0 0 9px rgba(255,255,255,0.55), 0 0 18px rgba(255,255,255,0.3); }
+  .jump { display: flex; gap: 6px; flex-wrap: wrap; }
+  .jump select {
+    font: inherit; font-size: 0.9rem; color: var(--text); background: var(--cell);
+    border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; cursor: pointer;
+  }
+  .jump select:hover { border-color: var(--muted); }
   .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .stat { background: var(--cell); border-radius: 12px; padding: 13px 15px; }
   .stat .k { color: var(--muted); font-size: 0.8rem; }
@@ -129,6 +136,11 @@
   <section class="panel">
     <div class="cal-head">
       <h3 id="monthTitle">—</h3>
+      <div class="jump" aria-label="Jump to a date">
+        <select id="jDay" aria-label="Day"></select>
+        <select id="jMonth" aria-label="Month"></select>
+        <select id="jYear" aria-label="Year"></select>
+      </div>
       <div class="btns">
         <button id="prev" aria-label="Previous month">‹</button>
         <button id="todayBtn">Today</button>
@@ -168,7 +180,12 @@ function showDetails(date) {
   drawMoon(document.getElementById('heroMoon'), phaseFraction(date));
   const nm = moonNameLine(date);
   const hn = document.getElementById('heroName');
-  hn.textContent = nm.text + (nm.cyc.meaning ? ` — ${nm.cyc.meaning.toLowerCase()}` : '');
+  hn.innerHTML = '';
+  hn.append(nm.prefix + ' ');
+  const g = document.createElement('span'); g.className = 'glow'; g.textContent = nm.label;
+  hn.appendChild(g);
+  if (nm.cyc.meaning) hn.append(` — ${nm.cyc.meaning.toLowerCase()}`);
+  if (typeof syncJump === 'function') syncJump(date);
 }
 
 // Which main phase (if any) happens during this calendar day
@@ -178,7 +195,7 @@ function mainPhaseOnDay(y, m, d) {
   for (const [t, label] of marks) {
     const next = nextPhaseDate(new Date(start.getTime() - 1), t);
     if (next >= start && next < end) {
-      if (t === 0.5) { const n = fullMoonName(next); return n.name.replace(' Moon', '') + (n.extra === 'Supermoon' ? ' ★' : ''); }
+      if (t === 0.5) { const n = fullMoonName(next); return n.name.replace(' Moon', ''); }
       return label;
     }
   }
@@ -245,7 +262,29 @@ document.getElementById('next').onclick = () => { view.setMonth(view.getMonth() 
 document.getElementById('todayBtn').onclick = () => {
   view = new Date(); view.setDate(1); selected = new Date(); showDetails(selected); renderCalendar();
 };
+// Jump to any day, month and year
+const jDay = document.getElementById('jDay'), jMonth = document.getElementById('jMonth'), jYear = document.getElementById('jYear');
+for (let m = 0; m < 12; m++) jMonth.add(new Option(new Date(2000, m, 1).toLocaleDateString(undefined, { month: 'long' }), m));
+for (let y = 1900; y <= 2100; y++) jYear.add(new Option(y, y));
+function fillJumpDays() {
+  const n = new Date(+jYear.value, +jMonth.value + 1, 0).getDate(), keep = Math.min(+jDay.value || 1, n);
+  jDay.innerHTML = '';
+  for (let d = 1; d <= n; d++) jDay.add(new Option(d, d));
+  jDay.value = keep;
+}
+function syncJump(d) { jYear.value = d.getFullYear(); jMonth.value = d.getMonth(); fillJumpDays(); jDay.value = d.getDate(); }
+function jumpTo() {
+  const d = new Date(+jYear.value, +jMonth.value, +jDay.value, 21, 0, 0);
+  selected = d; view = new Date(d.getFullYear(), d.getMonth(), 1);
+  showDetails(d); renderCalendar();
+}
+jMonth.onchange = () => { fillJumpDays(); jumpTo(); };
+jYear.onchange = () => { fillJumpDays(); jumpTo(); };
+jDay.onchange = jumpTo;
+syncJump(new Date());
+
 document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT') return;
   if (e.key === 'ArrowLeft') document.getElementById('prev').click();
   if (e.key === 'ArrowRight') document.getElementById('next').click();
 });

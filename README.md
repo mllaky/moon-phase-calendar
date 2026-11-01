@@ -1,4 +1,4 @@
-# 🌙 Moon Phase
+# Moon Phase
 
 A minimal black & white **desktop widget for macOS and Windows** that shows tonight's moon, plus a full **moon phase calendar** website.
 
@@ -8,12 +8,12 @@ Everything is calculated locally, with no internet, accounts or APIs needed.
   <img src="assets/screenshot-widget.png" width="300" alt="Moon Phase widget">
 </p>
 
-**🔗 Website:** https://mllaky.github.io/moon-phase-calendar/
-**⬇️ Download the widget:** [Latest release](https://github.com/mllaky/moon-phase-calendar/releases/latest)
+**Website:** https://mllaky.github.io/moon-phase-calendar/
+**Download the widget:** [Latest release](https://github.com/mllaky/moon-phase-calendar/releases/latest)
 
 ---
 
-## ✨ Features
+## Features
 
 ### Realistic moon
 - The real moon's seas (maria) in their true positions, thousands of craters, and bright ray craters like **Tycho** and **Copernicus**
@@ -26,6 +26,8 @@ Everything is calculated locally, with no internet, accounts or APIs needed.
 ### Desktop widget (Mac & Windows)
 - Tonight's **phase**, **illumination %**, and dates for the **next full and new moon**
 - The **name of the moon**: Wolf, Harvest, Hunter's, Blue Moon, Supermoon and more
+- A **live clock** with hours, minutes and seconds
+- A **date drop-down**: pick any day, month and year (1900 to 2100) to see the moon on that date
 - A **7-night strip** showing how the moon will change this week
 - **Drag it anywhere** on your desktop, and it remembers where you put it
 - **Starts with your computer** (you can turn this off)
@@ -38,7 +40,7 @@ Everything is calculated locally, with no internet, accounts or APIs needed.
 ### Calendar website
 - A drawn moon for every day of the month
 - New, First Quarter, Full and Last Quarter marked on their days
-- Click any day for its details
+- Click any day for its details, or jump to any day, month and year from the drop-downs
 - Upcoming phases with countdowns
 - Works on phones and desktops
 
@@ -46,7 +48,7 @@ Everything is calculated locally, with no internet, accounts or APIs needed.
   <img src="assets/screenshot-calendar.png" width="640" alt="Moon Phase Calendar">
 </p>
 
-## ⬇️ Install the widget
+## Install the widget
 
 1. Go to the [Releases page](https://github.com/mllaky/moon-phase-calendar/releases/latest).
 2. Download the file for your computer:
@@ -57,7 +59,7 @@ Everything is calculated locally, with no internet, accounts or APIs needed.
 > - **Mac:** if it says the app *can't be opened*, open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**. Older macOS versions: right-click the app → **Open**.
 > - **Windows:** on the blue SmartScreen box, click **More info → Run anyway**.
 
-## 🧮 How it works
+## How it works
 
 **Moon phases:** the app uses the formulas from Jean Meeus's *Astronomical Algorithms*, the standard reference used by astronomers, to calculate the exact time of every new moon, quarter and full moon. Results match the Old Farmer's Almanac to within a minute, for any year, past or future. Nothing is hard-coded, so it keeps working forever.
 
@@ -71,7 +73,7 @@ Every day shows which named moon it belongs to, e.g. *"Growing toward the Beaver
 
 **Drawing the moon:** a Python script (`tools/generate_moon_texture.py`) builds the moon's surface: the seas placed at their real latitude/longitude, around 4,000 craters with rims and central peaks, and ray systems. In the browser, each pixel is lit by the sun from the angle that matches the phase (a Lommel–Seeliger lighting model), so the shadow line, crater shadows and earthshine all come out naturally.
 
-## 🛠️ Built with
+## Built with
 
 - **Electron**: turns the web page into a native Mac & Windows app
 - HTML, CSS and vanilla JavaScript, with no frameworks
@@ -80,7 +82,7 @@ Every day shows which named moon it belongs to, e.g. *"Growing toward the Beaver
 - Python (NumPy, SciPy, Pillow) to generate the moon surface
 - **GitHub Actions**: automatically builds the `.dmg` and `.exe` installers
 
-## 📁 Project structure
+## Project structure
 
 ```
 moon.js        → moon math + realistic lighting (shared by everything)
@@ -94,7 +96,7 @@ assets/        → icons and screenshots
 .github/       → workflow that builds the installers
 ```
 
-## 💻 Run it yourself
+## Run it yourself
 
 You'll need [Node.js](https://nodejs.org) installed.
 
@@ -107,18 +109,18 @@ npm start
 
 Build an installer on your own machine: `npm run dist:mac` or `npm run dist:win`.
 
-## 💡 Future ideas
+## Future ideas
 
 - Moonrise and moonset times for your location
 - Southern-hemisphere view (the moon appears mirrored)
 - Hijri month start predictions
 - Voice: *"What's the moon phase tonight?"*
 
-## 👩‍💻 Author
+## Author
 
 **Malak**
 [GitHub](https://github.com/mllaky)
 
-## 📄 License
+## License
 
 MIT. Free to use and learn from.
